@@ -9,18 +9,21 @@ HELP = [
     'Options:',
     '   -h,--help',
     '   -o : Output folder, Default: ./output',
-    '   -r : Resolution(s), <WidthxHeight>, for multiple resolutions separate by comma, i.e -r 100x100,200x200'
+    '   -r : Resolution(s),',
+    '           <WidthxHeight> OR',
+    '           <Width> (preserves aspect ratio)'
+    '           For multiple resolutions separate by commas, i.e -r 900x450,650x325,450,200,100x100'
 ]
 
 options = {
-    '-h': HELP,
+    'short':'ho:r:',
+    'long': ['help', 'output=', 'resolution=']
 }
 
 
 def main(argv):
     try:
-        opts, args = getopt.getopt(argv, "ho:r:", ['help', 'output=', 'resolution='])
-        print(opts)
+        opts, args = getopt.getopt(argv, options['short'], options['long'])
     except getopt.GetoptError as exception:
         print(exception)
         print(*HELP, sep='\n')
