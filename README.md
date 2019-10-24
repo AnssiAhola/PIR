@@ -1,0 +1,2 @@
+# PIR
+Python Image Resizer
