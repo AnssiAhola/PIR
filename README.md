@@ -44,7 +44,7 @@ Optional
   --rotate                      Rotate image(s) if neccesary
 ```
 
-Example 1. Crop images inside a folder to 1280 by 720 and 500 by 500 resolutions
+Example 1. Crop images to 1280 by 720 and 500 by 500 resolutions
 ```
 > python PIR.py -i .\input\ -o .\output\  1280x720 500 --crop --verbose          
   Input:                C:\Users\<user>\input
@@ -88,9 +88,7 @@ Target Resolution: 500x500
 |  img4.jpeg |       5400x3600     |     500x500      |
 ```
 
-Note, 1 file was skipped because its width or height was equal or smaller than target 
-
-Example 2. 
+Example 2. Resize images to 420 resolution (width or height)
 ```
 > python PIR.py -i .\input\ -o .\output\  420 --resize --rotate --verbose -y       
   Input:                C:\Users\Anssi\Documents\Repos\PIR\input
