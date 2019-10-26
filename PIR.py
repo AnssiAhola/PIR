@@ -1,15 +1,21 @@
 #!/usr/bin/python3
 import os
-import sys
-import argparse
 import re
+import sys
 import math
-from PIL import Image, ImageOps, ExifTags
+import time
+import argparse
+import concurrent.futures
 from io import BytesIO
 from progress.bar import Bar
+from PIL import Image, ImageOps, ExifTags, ImageFile
 
+# Fixes "IOError: broken data stream when reading image file" when loading files concurrently
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 valid_ext = ['.jpg', '.jpeg', '.png']
+
+# Check if input folder/file exists
 
 
 def exists(s):
@@ -18,100 +24,147 @@ def exists(s):
     else:
         return s
 
-# Trying to get to work
+# Validate resolution (WidthxHeight OR Width)
 
 
-def validresolution(arr):
-    for res in arr:
-       # res = res.split('x')
-        res = map(lambda x: int(x), res)
-    return arr
+def resolution(res):
+    if re.match(r'^[0-9]+x*[0-9]+$', res):
+        return res
+    else:
+        raise argparse.ArgumentTypeError('&d' % res)
 
 
 parser = argparse.ArgumentParser(
-    description='Example. PIR.py ./inputfolder ./outputfolder 2560x1440 1920x1080')
-parser.add_argument('input', type=exists, help='input file or folder')
-parser.add_argument('output', help='output folder')
+    description='Example. PIR.py -i ./inputfolder -o ./outputfolder 2560x1440 1920 100x100 --resize')
 parser.add_argument(
-    'res', type=validresolution, nargs='+', help='output resolutions, <width>x<height> OR <width>')
+    '-i', '--input', type=exists, help='Input file or folder', required=True)
 parser.add_argument(
-    '--rotate', help='Rotate image(s) if neccesary', action='store_true')
-parser.add_argument('-y', help='Skip confirmation', action='store_true')
+    '-o', '--output', help='Output folder', required=True)
+parser.add_argument(
+    'resolution', type=resolution, nargs='+', help='output resolutions, <width>x<height> OR <width>')
+
+# Logging arguments
+parser.add_argument(
+    '-y', '--yes', help='Skip confirmation', action='store_true')
 parser.add_argument(
     '--verbose', help='Enable detailed logging', action='store_true')
 parser.add_argument(
-    '--organize', help='Organize output resolutions in their own folders, disables the resolution suffix', action='store_false')
+    '--organize',
+    help='Organize output resolutions in their own folders, disables the resolution suffix',
+    action='store_true')
+
+# Image processing arguments
+parser.add_argument(
+    '--rotate', help='Rotate image(s) if neccesary', action='store_true')
+group = parser.add_mutually_exclusive_group(required=True)
+group.add_argument(
+    '--resize', help='resize images, maintains aspect ratio', action='store_true')
+group.add_argument(
+    '--crop',
+    help='crop images, centered, NOTE: Skips images with width OR height greater or equal to target',
+    action='store_true')
+
 args = parser.parse_args()
 
 
 def main(argv):
+    skipped = 0
     try:
         input_dir = os.path.realpath(args.input)
-        rotate = True if args.rotate else False
         output_dir = os.path.realpath(args.output)
-        print(args.res)
-        # Determine if input is a file or a folder
-        # If a file, store the filename and remove it from input_dir
+        resolutions = args.resolution
+        for i, res in enumerate(resolutions):
+            resolutions[i] = tuple(map(lambda r: int(r), res.split('x')))
+            if len(resolutions[i]) is 1:
+                resolutions[i] = (resolutions[i][0], resolutions[i][0])
+
         if any(ext in input_dir for ext in valid_ext):
-            filenames = [input_dir.split('\\')[-1]]
+            files = [input_dir.split('\\')[-1]]
             input_dir = os.path.dirname(os.path.realpath(args.input))
         else:
-            filenames = [file for file in os.listdir(input_dir)]
+            files = [file for file in os.listdir(input_dir)]
 
         if args.verbose:
-            print('Inputfolder:         ', input_dir)
-            print('Outputfolder:        ', output_dir)
-            print('Rotate:              ', rotate)
-            print('Resolution(s):       ', args.res)
-            print(*filenames, sep='\n')
-            print()
-            if not args.y:
-                input('Press anything to continue, Ctrl+C to cancel...')
+            print('Input:               ', input_dir)
+            print('Output:              ', output_dir)
+            print('Rotate:              ', args.rotate)
+            print('Resolution(s):       ', *resolutions, '\n')
+            print(*files, sep='\n')
+            if not args.yes:
+                input('\nPress anything to continue, Ctrl+C to cancel...')
 
-        #resize(input_dir, filenames, output_dir, args.res)
+        start = time.perf_counter()
+
+        # Process imagefiles
+        action = 'Resizing' if args.resize else 'Cropping'
+        for res in resolutions:
+            with Bar('%s (%dx%d)' % (action, *res), max=len(files)) as bar:
+                if args.organize:
+                    save_to = os.path.join(output_dir, '%sx%s' % res)
+                else:
+                    save_to = output_dir
+                if not os.path.exists(save_to):
+                    os.mkdir(save_to)
+                with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
+                    def _helper(file):
+                        return process_img(file, input_dir, save_to, res)
+                    for file, success in zip(files, executor.map(_helper, files)):
+                        # Count how many images skipped
+                        if not success:
+                            skipped += 1
+                        bar.next()
+        if skipped > 0:
+            print(f'\nSkipped {skipped} file(s)')
+
+        end = time.perf_counter()
+
+        print(f'\nFinished in {(end-start):.2f} seconds')
 
     except KeyboardInterrupt:
-        print('\nProcess cancelled')
+        print('\nProcess cancelled\n')
 
 
-def resize(input_dir, filenames, output_dir, resolutions, quality=95):
-    # skipped = 0
+def process_img(file, input_dir, save_to, res, quality=95):
     try:
-        for res in resolutions:
-            with Bar('Resizing (%d)' % res, max=len(filenames)) as bar:
-                for filename in filenames:
-                    image = Image.open(os.path.join(input_dir, filename))
+        image = Image.open(os.path.join(input_dir, file))
+        target_W, target_h = res
+        width, height = image.size
+        name, ext = os.path.splitext(file)
 
-                    ratio = math.min(width/image.size[0], height/image.size[1])
+        # Skip images with resolution greater or equal to target resolution
+        if args.crop and (target_W >= width or target_h >= height):
+            return False
 
-                    # if res >= image.size[0 and 1]:
-                    #     skipped += 1
-                    #     continue
-                    name, ext = os.path.splitext(filename)
+        image = resize(image, res) if args.resize else crop(image, res)
 
-                    image.thumbnail([res, res], Image.ANTIALIAS)
+        # Add file suffix (resolution)
+        if not args.organize:
+            file = name + (f' - {target_W}x{target_h}') + ext
 
-                    # Determine where files will be saved and with or without resolution suffix
-                    if (args.organize):
-                        save_to = os.path.join(output_dir, str(res))
-                    else:
-                        save_to = output_dir
-                        filename = name + (' - %dx%d' % image.size) + ext
-                    # Check if save location exists
-                    if not os.path.exists(save_to):
-                        os.mkdir(save_to)
-
-                    image.save(
-                        os.path.join(save_to, filename),
-                        image.format,
-                        quality=quality)
-                    bar.next()
-        # print('Skipped %d files due to target resolution being larger or equal to original resolution' % skipped)
+        image.save(os.path.join(save_to, file), image.format, quality=quality)
+        return True     # Success
 
     except IOError as err:
-        print(err)
-    except KeyboardInterrupt:
-        print('\nProcess aborted')
+        print('IOError:', err, 'Skipped')
+        return False    # Skipped
+
+
+def resize(image, res):
+    max_width, max_height = res
+    width, height = image.size
+    resize_ratio = min(max_width/width, max_height/height)
+    new_size = (math.floor(resize_ratio * width),
+                math.floor(resize_ratio * height))
+    return image.resize(new_size, Image.ANTIALIAS)
+
+
+def crop(image, res):
+    return ImageOps.fit(image, res, Image.ANTIALIAS, 0, (0.5, 0.5))
+
+
+def rotate(image):
+
+    return image
 
 
 if __name__ == "__main__":
