@@ -24,7 +24,7 @@ Supported filetypes are JPG/JPEG, PNG
 python PIR.py -i INPUT -o OUTPUT [resolution ...] (--resize | --crop) --verbose -y --organize --rotate
 ```
 
-Options
+#### Options
 ```
 Required
   -i INPUT, --input INPUT       Input file or folder
@@ -44,7 +44,8 @@ Optional
   --rotate                      Rotate image(s) if neccesary
 ```
 
-Example 1. Crop images to 1280 by 720 and 500 by 500 resolutions
+#### Example 1. Crop images to 1280 by 720 and 500 by 500 resolutions
+
 ```
 > python PIR.py -i .\input\ -o .\output\  1280x720 500 --crop --verbose          
   Input:                C:\Users\<user>\input
@@ -68,7 +69,7 @@ Example 1. Crop images to 1280 by 720 and 500 by 500 resolutions
 
   Finished in 0.72 seconds
 ```
-Result
+#### Result
 
 Target Resolution: 1280x720
 
@@ -90,7 +91,7 @@ Target Resolution: 500x500
 |  img4.jpeg |       5400x3600     |     500x500      |
 
 
-Example 2. Resize images to 420 resolution (width or height)
+#### Example 2. Resize images to 420 resolution (width or height)
 ```
 > python PIR.py -i .\input\ -o .\output\  420 --resize --rotate --verbose -y       
   Input:                C:\Users\Anssi\Documents\Repos\PIR\input
@@ -109,9 +110,9 @@ Example 2. Resize images to 420 resolution (width or height)
 
   Finished in 0.32 seconds
 ```
-Result
+#### Result
 
-Target Resolution: 420x420
+Target Resolution: 420
 
 |    File    | Original Resolution | Final Resolution |   Note
 | :--------: | :-----------------: | :--------------: | :-----------:
