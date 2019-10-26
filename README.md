@@ -21,37 +21,30 @@ Supported filetypes are JPG/JPEG, PNG
 
 ### Usage
 ```
-PIR.py [-h] -i INPUT -o OUTPUT resolution [resolution ...] (--resize | --crop) [--verbose] [-y] [--organize] [--rotate] 
-              
-              
+python PIR.py -i INPUT -o OUTPUT [resolution ...] (--resize | --crop) --verbose -y --organize --rotate
 ```
-
-
 
 Options
 ```
--h, --help                    show this help message and exit
+Required
+  -i INPUT, --input INPUT       Input file or folder
+  -o OUTPUT, --output OUTPUT    Output folder
+  resolution                    output resolutions, <width>x<height> OR <width>
+  --resize                      resize images, maintains aspect ratio
+  OR
+  --crop                        crop images, centered, 
+                                NOTE: Skips images with width OR height smaller or equal to target
 
--i INPUT, --input INPUT       Input file or folder
--o OUTPUT, --output OUTPUT    Output folder
-resolution                    output resolutions, <width>x<height> OR <width>
-
---rotate                      Rotate image(s) if neccesary
-
---resize                      resize images, maintains aspect ratio
---crop                        crop images, centered, NOTE: Skips images with width OR height smaller or equal to target
-Either resize OR crop argument is required
-
--y, --yes                     Skip confirmation
---verbose                     Enable detailed logging
---organize                    Organize output resolutions in their own folders,
-                              disables the resolution suffix
---rotate                      Rotate image(s) if neccesary
---resize                      resize images, maintains aspect ratio
---crop                        crop images, centered, NOTE: Skips images with width OR height smaller or equal to target
+Optional
+  -h, --help                    show this help message and exit
+  --verbose                     Enable detailed logging
+  -y, --yes                     Skip confirmation
+  --organize                    Organize output resolutions in their own folders,
+                                disables the resolution suffix on files
+  --rotate                      Rotate image(s) if neccesary
 ```
 
-Crop images inside a folder to 1280 by 720 and 500 by 500 resolutions
+Example 1. Crop images inside a folder to 1280 by 720 and 500 by 500 resolutions
 ```
 > python PIR.py -i .\input\ -o .\output\  1280x720 500 --crop --verbose          
   Input:                C:\Users\<user>\input
@@ -75,4 +68,56 @@ Crop images inside a folder to 1280 by 720 and 500 by 500 resolutions
 
   Finished in 0.72 seconds
 ```
+Result
+``` 
+Target Resolution: 1280x720
+|    File    | Original Resolution | Final Resolution |   Note
+--------------------------------------------------------------------
+|  img1.png  |       839x1280      |        -         |  Skipped, Original width is lower than target
+|  img2.jpg  |       1350x940      |     1280x720     |
+|  img3.jpg  |       3840x2160     |     1280x720     |
+|  img4.jpeg |       5400x3600     |     1280x720     |
+
+
+Target Resolution: 500x500
+|    File    | Original Resolution | Final Resolution |   Note
+--------------------------------------------------------------------
+|  img1.png  |       839x1280      |     500x500      |
+|  img2.jpg  |       1350x940      |     500x500      |
+|  img3.jpg  |       3840x2160     |     500x500      |
+|  img4.jpeg |       5400x3600     |     500x500      |
+```
+
 Note, 1 file was skipped because its width or height was equal or smaller than target 
+
+Example 2. 
+```
+> python PIR.py -i .\input\ -o .\output\  420 --resize --rotate --verbose -y       
+  Input:                C:\Users\Anssi\Documents\Repos\PIR\input
+  Output:               C:\Users\Anssi\Documents\Repos\PIR\output
+  Rotate:               True
+  Resolution(s):        (420, 420)
+
+  File(s):
+
+   img1.png
+   img2.jpg
+   img3.jpg
+   img4.jpeg
+
+  Cropping (420x420) |################################| 4/4
+
+  Finished in 0.32 seconds
+```
+Result
+``` 
+Target Resolution: 420x420
+|    File    | Original Resolution | Final Resolution |   Note
+--------------------------------------------------------------------
+|  img1.png  |       839x1280      |     275x420      |
+|  img2.jpg  |       940x1350      |     420x292      | Original is oriented incorrectly
+|  img3.jpg  |       3840x2160     |     420x236      |
+|  img4.jpeg |       5400x3600     |     420x280      |
+```
+
+
