@@ -76,8 +76,3 @@ Crop images inside a folder to 1280 by 720 and 500 by 500 resolutions
   Finished in 0.72 seconds
 ```
 Note, 1 file was skipped because its width or height was equal or smaller than target 
-
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE.md file for details
