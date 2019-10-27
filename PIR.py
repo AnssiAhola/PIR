@@ -7,13 +7,13 @@ from time import perf_counter
 from argparse import ArgumentParser, ArgumentTypeError
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
-from PIL import Image, ImageOps, ExifTags, ImageFile
+from PIL import Image, ImageOps, ExifTags, ImageFile, ImageSequence
 from functools import reduce
 
 # Fixes "IOError: broken data stream when reading image file" when loading files concurrently
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-supported = ['.jpg', '.jpeg', '.png']
+supported = ['.jpg', '.jpeg', '.png', '.gif']
 
 
 # Check if input folder/file exists
@@ -196,6 +196,16 @@ def process_img(file, input_dir, output_dir, res, quality=args.quality):
         width, height = image.size
         name, ext = path.splitext(file)
 
+        if image.format is 'GIF':
+            frames = process_gif(image, res)
+            output = next(frames)
+            output.info = image.info
+            if not args.organize:
+                file = name + (' - %dx%d' % output.size) + ext
+            output.save(
+                path.join(output_dir, file), save_all=True, append_images=list(frames), optimize=True)
+            return True
+
         # When cropping skip images with resolution smaller or equal to target resolution
         if args.crop and (target_W >= width or target_h >= height):
             return False
@@ -211,12 +221,29 @@ def process_img(file, input_dir, output_dir, res, quality=args.quality):
         if not args.organize:
             file = name + (' - %dx%d' % image.size) + ext
 
-        image.save(path.join(output_dir, file), image.format, quality=quality)
+        image.save(
+            path.join(output_dir, file), image.format,
+            quality=quality, optimize=True)
         return True     # Success
 
     except IOError as err:
         print('IOError:', err, 'Skipped')
         return False    # Skipped
+
+
+# https://gist.github.com/skywodd/8b68bd9c7af048afcedcea3fb1807966
+# Results in larger filesizes relative to original
+def process_gif(image, res):
+    frames = ImageSequence.Iterator(image)
+
+    def thumbnails(frames):
+        for frame in frames:
+            thumbnail = frame.copy()
+            thumbnail.thumbnail(res, resampler)
+            yield thumbnail
+
+    frames = thumbnails(frames)
+    return frames
 
 
 def resize(image, res):
