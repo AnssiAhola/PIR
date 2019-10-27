@@ -6,7 +6,7 @@ Small script for editing images in bulk or one by one
 Supports: 
 * Resizing without altering the aspect ratio,
 * Cropping, crops images to the specified size, cropped from the middle
-* Rotating, rotates images so they are oriented correctly
+* Rotating, tries to rotate images the right way around (JPG only)
 
 Supported filetypes are JPG/JPEG, PNG
 
@@ -17,11 +17,11 @@ Supported filetypes are JPG/JPEG, PNG
 * pip
 * python 3.7+
 * pillow 6.2+   https://github.com/python-pillow/Pillow
-* progress 1.5+ https://github.com/verigak/progress/
 
 ### Usage
 ```
-python PIR.py -i INPUT -o OUTPUT [resolution ...] (--resize | --crop) --verbose -y --organize --rotate
+python PIR.py -i INPUT -o OUTPUT [resolution ...] (--resize | --crop) 
+              --rotate -q [1-95] [-AA | -BC | -BL | -N] --verbose -y --organize
 ```
 
 #### Options
@@ -37,11 +37,20 @@ Required
 
 Optional
   -h, --help                    show this help message and exit
+  -q [1-95], --quality [1-95]   Picture quality, Value between 1-95, Default is 75
+  
+  Pick one:
+  -AA, --antialias              Uses Antialias/Lanczos as resampler, Slow (DEFAULT)
+  -BC, --bicubic                Uses Bicubic as resampler, Fast
+  -BL, --bilinear               Uses Bilinear as resampler, Faster)
+  -N, --nearest                 Uses Nearest as resampler, Fastest
+  
   --verbose                     Enable detailed logging
   -y, --yes                     Skip confirmation
   --organize                    Organize output resolutions in their own folders,
                                 disables the resolution suffix on files
-  --rotate                      Rotate image(s) if neccesary
+  --rotate                      Rotate image(s) if neccesary, 
+                                Useful phone pictures taken with a phone
 ```
 
 #### Example 1. Crop images to 1280 by 720 and 500 by 500 resolutions
@@ -60,14 +69,18 @@ Optional
    img3.jpg
    img4.jpeg
   
-  Press anything to continue, Ctrl+C to cancel...
-  
-  Cropping (1280x720) |################################| 4/4
-  Cropping (500x500) |################################| 4/4
+   4 file(s)
+
+  Press any key to continue, Ctrl+C to cancel...
+
+  Cropping (1280x720)     [##############################] 4/4
+           Done, time elapsed: 0.38 seconds
+  Cropping (500x500)      [##############################] 4/4
+           Done, time elapsed: 0.31 seconds
 
   Skipped 1 file(s)
 
-  Finished in 0.72 seconds
+  Finished in 0.70 seconds
 ```
 #### Result
 
@@ -106,9 +119,12 @@ Target Resolution: 500x500
    img3.jpg
    img4.jpeg
 
-  Cropping (420x420) |################################| 4/4
+   4 file(s)
 
-  Finished in 0.32 seconds
+  Resizing (420x420)      [##############################] 4/4
+           Done, time elapsed: 0.37 seconds
+
+  Finished in 0.37 seconds
 ```
 #### Result
 
