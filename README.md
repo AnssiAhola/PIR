@@ -16,7 +16,7 @@ Supported filetypes are JPG/JPEG, PNG
 
 * pip
 * python 3.7+
-* pillow 6.2+   https://github.com/python-pillow/Pillow
+* pillow 5.2+   https://github.com/python-pillow/Pillow
 
 ### Usage
 ```
