@@ -108,8 +108,8 @@ Target Resolution: 500x500
 #### Example 2. Resize images to 420 resolution (width or height)
 ```
 > python PIR.py -i .\input\ -o .\output\  420 --resize --rotate --verbose -y       
-  Input:                C:\Users\Anssi\Documents\Repos\PIR\input
-  Output:               C:\Users\Anssi\Documents\Repos\PIR\output
+  Input:                C:\Users\<user>\\input
+  Output:               C:\Users\<user>\output
   Rotate:               True
   Resolution(s):        (420, 420)
 
