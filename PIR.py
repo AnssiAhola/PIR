@@ -45,9 +45,9 @@ parser.add_argument(
 parser.add_argument(
     '-y', '--yes', help='Skip confirmation', action='store_true')
 parser.add_argument(
-    '--verbose', help='Enable detailed logging', action='store_true')
+    '-v', '--verbose', help='Enable detailed logging', action='store_true')
 parser.add_argument(
-    '--organize',
+    '-O', '--organize',
     help='Organize output resolutions in their own folders, disables the resolution suffix on files',
     action='store_true')
 
@@ -70,12 +70,12 @@ quality.add_argument(
 quality.add_argument(
     '-N', '--nearest', help='Uses Nearest as resampler, Fastest', action='store_true')
 parser.add_argument(
-    '--rotate', help='Rotate image(s) if neccesary, Useful for pictures taken with a phone', action='store_true')
+    '-R', '--rotate', help='Rotate image(s) if neccesary, Useful for pictures taken with a phone', action='store_true')
 actions = parser.add_mutually_exclusive_group(required=True)
 actions.add_argument(
-    '--resize', help='Resize images, maintains aspect ratio', action='store_true')
+    '-r', '--resize', help='Resize images, maintains aspect ratio', action='store_true')
 actions.add_argument(
-    '--crop',
+    '-c', '--crop',
     help='crop images, centered, NOTE: Skips images with width OR height smaller or equal to target',
     action='store_true')
 
