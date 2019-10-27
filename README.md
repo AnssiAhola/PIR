@@ -138,3 +138,15 @@ Target Resolution: 420
 |  img4.jpeg |       5400x3600     |     420x280      |
 
 
+#### Example 3. Convert folder full of highres images (792) to 1000x1000, 500x500 and 100x100 thumbnails
+```
+> python PIR.py -i ./input  -o ./output  1000 500 100  -cN    
+  Cropping (1000x1000)    [##############################] 792/792
+           Done, time elapsed: 23.28 seconds
+  Cropping (500x500)      [##############################] 792/792
+           Done, time elapsed: 21.74 seconds
+  Cropping (100x100)      [##############################] 792/792
+           Done, time elapsed: 20.91 seconds
+
+  Finished in 65.94 seconds
+```
