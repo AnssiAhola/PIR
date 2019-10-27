@@ -45,9 +45,9 @@ parser.add_argument(
 parser.add_argument(
     '-y', '--yes', help='Skip confirmation', action='store_true')
 parser.add_argument(
-    '--verbose', help='Enable detailed logging', action='store_true')
+    '-v', '--verbose', help='Enable detailed logging', action='store_true')
 parser.add_argument(
-    '--organize',
+    '-O', '--organize',
     help='Organize output resolutions in their own folders, disables the resolution suffix on files',
     action='store_true')
 
@@ -70,12 +70,12 @@ quality.add_argument(
 quality.add_argument(
     '-N', '--nearest', help='Uses Nearest as resampler, Fastest', action='store_true')
 parser.add_argument(
-    '--rotate', help='Rotate image(s) if neccesary, Useful for pictures taken with a phone', action='store_true')
+    '-R', '--rotate', help='Rotate image(s) if neccesary, Useful for pictures taken with a phone', action='store_true')
 actions = parser.add_mutually_exclusive_group(required=True)
 actions.add_argument(
-    '--resize', help='Resize images, maintains aspect ratio', action='store_true')
+    '-r', '--resize', help='Resize images, maintains aspect ratio', action='store_true')
 actions.add_argument(
-    '--crop',
+    '-c', '--crop',
     help='crop images, centered, NOTE: Skips images with width OR height smaller or equal to target',
     action='store_true')
 
@@ -134,7 +134,7 @@ def main(argv):
         action = 'Resizing' if args.resize else 'Cropping'
         for res in resolutions:
             res_start = perf_counter()
-            with progress(file_count, '%s (%dx%d)\t' % (action, *res), 30) as bar:
+            with ProgressBar(file_count, '%s (%dx%d)\t' % (action, *res), 30) as bar:
                 if args.organize:
                     save_to = path.join(output_dir, '%sx%s' % res)
                 else:
@@ -148,7 +148,7 @@ def main(argv):
                         # Count how many images skipped
                         if not success:
                             skipped += 1
-                        bar.update()
+                        bar.next()
             res_end = perf_counter()
             print(f'\t Done, time elapsed: {(res_end-res_start):.2f} seconds')
         if skipped > 0:
@@ -165,7 +165,7 @@ def main(argv):
 
 
 # Progress bar, modified for concurrency from https://stackoverflow.com/a/34482761
-class progress():
+class ProgressBar():
     def __init__(self, count, prefix="", size=60):
         self.count = count
         self.completed = 0
@@ -179,7 +179,7 @@ class progress():
     def __exit__(self, exc_type, exc_value, traceback):
         pass
 
-    def update(self):
+    def next(self):
         self.file.flush()
         self.completed += 1
         self.x = int(self.size*self.completed/self.count)
