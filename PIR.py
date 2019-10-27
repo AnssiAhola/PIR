@@ -99,22 +99,28 @@ def main(argv):
         input_dir = path.realpath(args.input)
         output_dir = path.realpath(args.output)
         resolutions = args.resolution
+
+        # Convert resolutions to tuple of ints, 1920x1080 -> (1920,1080) and 100 -> (100,100)
         for i, res in enumerate(resolutions):
             resolutions[i] = tuple(map(lambda r: int(r), res.split('x')))
-            if len(resolutions[i]) is 1:
+            if len(resolutions[i]) == 1:
                 resolutions[i] = (resolutions[i][0], resolutions[i][0])
 
-        # Filter out unsupported files
-        if any(ext in input_dir for ext in supported):
-            files = [input_dir.split('\\')[-1]]
-            input_dir = path.dirname(path.realpath(args.input))
-        elif path.isdir(input_dir):
-            files = [file for file in listdir(input_dir) if any(
-                ext in file for ext in supported)]
+        # Get list of Files
+        if path.isdir(input_dir):
+            files = listdir(input_dir)
         else:
-            raise OSError(0, 'Input filetype is not supported')
+            files = [input_dir.split('\\')[-1]]
+            # Single file as input so get the directory
+            input_dir = path.dirname(args.input)
+
+        # Filter out unsupported files
+        files = [file for file in files if any(
+            ext in file for ext in supported)]
 
         file_count = len(files)
+        if file_count == 0:
+            raise OSError(0, 'Input filetype is not supported')
 
         if args.verbose:
             print('Input:               ', input_dir)
@@ -126,37 +132,40 @@ def main(argv):
             print('File(s):\n', *files, sep='\n ')
             print(f'\n {file_count} file(s)\n')
             if not args.yes:
-                input('Press any key to continue, Ctrl+C to cancel...\n')
+                input('Press enter to continue, Ctrl+C to cancel...\n')
 
         start = perf_counter()
 
-        # Process imagefiles
+        # Process image files
+        print()
         action = 'Resizing' if args.resize else 'Cropping'
         for res in resolutions:
             res_start = perf_counter()
+
             with ProgressBar(file_count, '%s (%dx%d)\t' % (action, *res), 30) as bar:
-                if args.organize:
-                    save_to = path.join(output_dir, '%sx%s' % res)
-                else:
-                    save_to = output_dir
-                if not path.exists(save_to):
-                    makedirs(save_to, exist_ok=True)
+                # Determine where to save images ./output/ or ./output/resolution
+                save_to = path.join(output_dir,
+                                    '%sx%s' % res) if args.organize else output_dir
+                makedirs(save_to, exist_ok=True)
+
                 with ThreadPoolExecutor(max_workers=6) as executor:
+                    # Helper to pass rest of the arguments needed
                     def _helper(file):
                         return process_img(file, input_dir, save_to, res)
+                    # Process images concurrently
                     for file, success in zip(files, executor.map(_helper, files)):
-                        # Count how many images skipped
                         if not success:
                             skipped += 1
                         bar.next()
+
             res_end = perf_counter()
             print(f'\t Done, time elapsed: {(res_end-res_start):.2f} seconds')
+
         if skipped > 0:
             print(f'\nSkipped {skipped} file(s)')
 
         end = perf_counter()
-
-        print(f'\nFinished in {(end-start):.2f} seconds')
+        print(f'\nFinished in {(end-start):.2f} seconds\n')
 
     except KeyboardInterrupt:
         print('\nProcess cancelled\n')
@@ -196,13 +205,14 @@ def process_img(file, input_dir, output_dir, res, quality=args.quality):
         width, height = image.size
         name, ext = path.splitext(file)
 
-        if image.format is 'GIF':
-            frames = process_gif(image, res)
-            output = next(frames)
-            output.info = image.info
+        # Process GIFs seperately
+        if image.format == 'GIF':
+            frames = process_gif(image, res)  # returns iterator
+            output = next(frames)  # get the first frame
+            output.info = image.info  # copy image info
             if not args.organize:
                 file = name + (' - %dx%d' % output.size) + ext
-            output.save(
+            output.save(  # save GIF and append rest of the frames to it
                 path.join(output_dir, file), save_all=True, append_images=list(frames), optimize=True)
             return True
 
@@ -241,7 +251,6 @@ def process_gif(image, res):
             thumbnail = frame.copy()
             thumbnail.thumbnail(res, resampler)
             yield thumbnail
-
     frames = thumbnails(frames)
     return frames
 
@@ -268,7 +277,7 @@ def rotate(image):
         [Image.FLIP_LEFT_RIGHT, Image.ROTATE_90],   # 5   left     top
         [Image.ROTATE_270],                         # 6   right    top
         [Image.FLIP_TOP_BOTTOM, Image.ROTATE_90],   # 7   right    bottom
-        [Image.ROTATE_90],  # 8   left     bottom
+        [Image.ROTATE_90]                           # 8   left     bottom
     ]
 
     try:
