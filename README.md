@@ -20,8 +20,9 @@ Supported filetypes are JPG/JPEG, PNG
 
 ### Usage
 ```
-python PIR.py -i INPUT -o OUTPUT [resolution ...] (--resize | --crop) 
-              --rotate -q [1-95] [-AA | -BC | -BL | -N] --verbose -y --organize
+python PIR.py [-h] -i INPUT -o OUTPUT [-y] [-v] [-O] [-q [1-95]]
+              [-AA | -BC | -BL | -N] [-R] (-r | -c)
+              resolution [resolution ...]
 ```
 
 #### Options
@@ -30,9 +31,9 @@ Required
   -i INPUT, --input INPUT       Input file or folder
   -o OUTPUT, --output OUTPUT    Output folder
   resolution                    output resolutions, <width>x<height> OR <width>
-  --resize                      resize images, maintains aspect ratio
+  -r, --resize                  resize images, maintains aspect ratio
   OR
-  --crop                        crop images, centered, 
+  -c, --crop                    crop images, centered, 
                                 NOTE: Skips images with width OR height smaller or equal to target
 
 Optional
@@ -45,11 +46,11 @@ Optional
   -BL, --bilinear               Uses Bilinear as resampler, Faster)
   -N, --nearest                 Uses Nearest as resampler, Fastest
   
-  --verbose                     Enable detailed logging
+  -v, --verbose                 Enable detailed logging
   -y, --yes                     Skip confirmation
-  --organize                    Organize output resolutions in their own folders,
+  -O, --organize                Organize output resolutions in their own folders,
                                 disables the resolution suffix on files
-  --rotate                      Rotate image(s) if neccesary, 
+  -R, --rotate                  Rotate image(s) if neccesary, 
                                 Useful phone pictures taken with a phone
 ```
 
