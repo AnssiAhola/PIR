@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from os import path, listdir, mkdir
+from os import path, listdir, makedirs
 from re import match
 from sys import argv, stdout
 from math import floor
@@ -140,7 +140,7 @@ def main(argv):
                 else:
                     save_to = output_dir
                 if not path.exists(save_to):
-                    mkdir(save_to)
+                    makedirs(save_to, exist_ok=True)
                 with ThreadPoolExecutor(max_workers=6) as executor:
                     def _helper(file):
                         return process_img(file, input_dir, save_to, res)
