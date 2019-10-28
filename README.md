@@ -8,7 +8,9 @@ Supports:
 * Cropping, crops images to the specified size, cropped from the middle
 * Rotating, tries to rotate images the right way around (JPG only)
 
-Supported filetypes are JPG/JPEG, PNG
+Supported filetypes are JPG/JPEG, PNG and GIF*
+
+<sub><sup>*Not recommended as output gifs come out larger in file size relative to originals</sup></sub>
 
 ## Getting Started
 
